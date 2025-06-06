@@ -1,0 +1,6 @@
+["DemoApp.General"]
+LOG_LEVEL = { defaultValue = "INFO", type = "str", allowedValues = ["DEBUG","INFO","WARNING","ERROR"] }
+RETRY_COUNT = { defaultValue = 3, type = "int", min = 0 }
+
+["DemoApp.Features"]
+ENABLE_FEATURE_X = { defaultValue = true, type = "bool" }
