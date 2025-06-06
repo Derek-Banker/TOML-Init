@@ -5,12 +5,21 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "toml-init"
 version = "0.1.0"
+description = "A library to auto-create and validate TOML configuration files from templates"
+readme = "README.md"
+authors = [{ name = "Derek Banker", email = "dbb2002@gmail.com" }]
+license = { file = "LICENSE" }
 requires-python = ">=3.7"
 dependencies = ["pytomlpp>=1.0.0"]
-authors = [{name="Derek Banker", email="dbb2002@gmail.com"}]
-description = "A library to auto-create & validate TOML configs from default templates"
-readme = "README.md"
-license = { file = "LICENSE" }
+
+# Optional additional metadata
+keywords = ["toml", "configuration", "validation"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+urls = { "Homepage" = "https://github.com/youruser/toml-init", "Bug Tracker" = "https://github.com/youruser/toml-init/issues" }
 
 [project.scripts]
 toml-init = "toml_init.manager:main"
