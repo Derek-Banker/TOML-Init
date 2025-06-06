@@ -129,6 +129,10 @@ Place your default templates in `configs/defaults/`. Each file may define **mult
 ```toml
 # defaults/app_defaults.toml
 
+[__meta__]
+name = "Config - QuickBooks Invoice Saver"
+module_version = "0.1.0"
+
 [QuickBooks.Invoices.Saver]
 SHOW_TOASTS = true
 WINDOW_LOAD_DELAY  = { defaultValue = 0.5,  type = "float", min = 0.0 }
@@ -144,6 +148,7 @@ ENABLE_LOGS = { defaultValue = true,   type = "bool" }
 
   * A primitive default: `KEY = 123` (shorthand for a setting with only `defaultValue`).
   * A full schema object: specifying `type`, optional `min`/`max`, `allowedValues`, and `validator`.
+* An optional `[__meta__]` table may be present and is ignored by the library.
 
 ## Supported Types
 

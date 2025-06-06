@@ -1,3 +1,8 @@
+
+[__meta__]
+name = "Demo defaults"
+module_version = "0.1.0"
+
 ["DemoApp.General"]
 LOG_LEVEL = { defaultValue = "INFO", type = "str", allowedValues = ["DEBUG","INFO","WARNING","ERROR"] }
 RETRY_COUNT = { defaultValue = 3, type = "int", min = 0 }
@@ -6,3 +11,4 @@ REFRESH_TIMES = { defaultValue = [08:00:00, 12:00:00], type = "list" }
 
 ["DemoApp.Features"]
 ENABLE_FEATURE_X = { defaultValue = true, type = "bool" }
+SHOW_TOASTS = true
