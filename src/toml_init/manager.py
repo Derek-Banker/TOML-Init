@@ -6,6 +6,7 @@ import logging
 import pytomlpp as toml
 from pathlib import Path
 from typing import Final
+from datetime import date, datetime, time
 
 from toml_init.exceptions import (
     MultipleConfigFilesError,
@@ -15,12 +16,49 @@ from toml_init.exceptions import (
 )
 from toml_init.validators import CUSTOM_VALIDATORS, Validator, register_validator
 
+
+def _ensure_datetime(value):
+    if isinstance(value, datetime):
+        return value
+    raise TypeError("value is not a datetime")
+
+
+def _ensure_date(value):
+    if isinstance(value, date) and not isinstance(value, datetime):
+        return value
+    raise TypeError("value is not a date")
+
+
+def _ensure_time(value):
+    if isinstance(value, time):
+        return value
+    raise TypeError("value is not a time")
+
+
+def _ensure_list(value):
+    if isinstance(value, list):
+        return value
+    raise TypeError("value is not a list")
+
+
+def _ensure_dict(value):
+    if isinstance(value, dict):
+        return value
+    raise TypeError("value is not a dict")
+
 # Type coercion registry
 TYPE_REGISTRY = {
     "int": int,
     "float": float,
     "bool": bool,
     "str": str,
+    "datetime": _ensure_datetime,
+    "date": _ensure_date,
+    "time": _ensure_time,
+    "list": _ensure_list,
+    "array": _ensure_list,
+    "dict": _ensure_dict,
+    "table": _ensure_dict,
 }
 
 cwd = Path(os.getcwd())
