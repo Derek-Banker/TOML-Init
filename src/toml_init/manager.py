@@ -46,6 +46,7 @@ def _ensure_dict(value):
         return value
     raise TypeError("value is not a dict")
 
+
 # Type coercion registry
 TYPE_REGISTRY = {
     "int": int,
@@ -61,12 +62,56 @@ TYPE_REGISTRY = {
     "table": _ensure_dict,
 }
 
+# Keys that indicate a value is a schema object rather than a primitive default
+SCHEMA_KEYS = {"defaultValue", "type", "min", "max", "allowedValues", "validator"}
+
+
+def _infer_type(value) -> str:
+    """Return the schema type string for a python value."""
+    if isinstance(value, bool):
+        return "bool"
+    if isinstance(value, int) and not isinstance(value, bool):
+        return "int"
+    if isinstance(value, float):
+        return "float"
+    if isinstance(value, str):
+        return "str"
+    if isinstance(value, datetime):
+        return "datetime"
+    if isinstance(value, date) and not isinstance(value, datetime):
+        return "date"
+    if isinstance(value, time):
+        return "time"
+    if isinstance(value, list):
+        return "list"
+    if isinstance(value, dict):
+        return "dict"
+    raise InvalidDefaultSchemaError(
+        f"Unsupported default value type: {type(value).__name__}"
+    )
+
+
+def _normalize_table(tbl: dict) -> dict:
+    """Convert shorthand defaults to full schema dictionaries."""
+    normalized = {}
+    for key, val in tbl.items():
+        if isinstance(val, dict) and SCHEMA_KEYS.intersection(val.keys()):
+            normalized[key] = val
+        else:
+            normalized[key] = {
+                "defaultValue": val,
+                "type": _infer_type(val),
+            }
+    return normalized
+
+
 cwd = Path(os.getcwd())
 
-DEFAULT_CONFIG_FOLDER_PATH:         Final[Path] = cwd.joinpath("configs") 
-DEFAULT_CONFIG_DEFAULT_FOLDER_PATH: Final[Path] = DEFAULT_CONFIG_FOLDER_PATH.joinpath("defaults") 
-DEFAULT_CONFIG_FILE_NAME:           Final[str]  = "config.toml" 
-
+DEFAULT_CONFIG_FOLDER_PATH: Final[Path] = cwd.joinpath("configs")
+DEFAULT_CONFIG_DEFAULT_FOLDER_PATH: Final[Path] = DEFAULT_CONFIG_FOLDER_PATH.joinpath(
+    "defaults"
+)
+DEFAULT_CONFIG_FILE_NAME: Final[str] = "config.toml"
 
 
 def validate_setting(key_name: str, raw_value, schema: dict):
@@ -83,7 +128,9 @@ def validate_setting(key_name: str, raw_value, schema: dict):
 
     # Type coercion
     if expected_str not in TYPE_REGISTRY:
-        raise InvalidDefaultSchemaError(f"Type '{expected_str}' for '{key_name}' not supported.")
+        raise InvalidDefaultSchemaError(
+            f"Type '{expected_str}' for '{key_name}' not supported."
+        )
     try:
         coerced = TYPE_REGISTRY[expected_str](raw_value)
     except (ValueError, TypeError):
@@ -94,7 +141,9 @@ def validate_setting(key_name: str, raw_value, schema: dict):
     # Range checks for numbers
     if expected_str in ("int", "float"):
         num = float(coerced) if expected_str == "float" else int(coerced)
-        if (min_allowed is not None and num < min_allowed) or (max_allowed is not None and num > max_allowed):
+        if (min_allowed is not None and num < min_allowed) or (
+            max_allowed is not None and num > max_allowed
+        ):
             raise InvalidConfigValueError(
                 f"Key '{key_name}'={num} outside range [{min_allowed}, {max_allowed}]."
             )
@@ -116,6 +165,7 @@ def validate_setting(key_name: str, raw_value, schema: dict):
         coerced = validator.validate(coerced)
 
     return coerced
+
 
 class ConfigManager:
     def __init__(
@@ -142,7 +192,9 @@ class ConfigManager:
         # Find master TOML
         toml_files = list(self.base_path.glob("*.toml"))
         if len(toml_files) > 1:
-            raise MultipleConfigFilesError(f"Multiple TOML in {self.base_path}: {toml_files}")
+            raise MultipleConfigFilesError(
+                f"Multiple TOML in {self.base_path}: {toml_files}"
+            )
         elif toml_files:
             master_path = toml_files[0]
             self.logger.debug(f"Using existing master: {master_path}")
@@ -172,9 +224,12 @@ class ConfigManager:
         for df in sorted(self.defaults_path.glob("*.toml")):
             doc = toml.load(str(df))
             for blk, tbl in doc.items():
-                if blk in seen and not self._schemas_compatible(seen[blk], tbl):
+                if blk == "__meta__":
+                    continue
+                normalized = _normalize_table(tbl)
+                if blk in seen and not self._schemas_compatible(seen[blk], normalized):
                     raise BlockConflictError(f"Conflict for block {blk}")
-                seen[blk] = tbl
+                seen[blk] = normalized
 
         # Validate or insert defaults
         for blk, schema_tbl in seen.items():
@@ -186,8 +241,10 @@ class ConfigManager:
                 try:
                     validated[k] = validate_setting(k, raw, schema)
                 except InvalidConfigValueError as e:
-                    self.logger.warning(str(e) + f" -> resetting to default {schema['defaultValue']}")
-                    validated[k] = schema['defaultValue']
+                    self.logger.warning(
+                        str(e) + f" -> resetting to default {schema['defaultValue']}"
+                    )
+                    validated[k] = schema["defaultValue"]
             # preserve extras
             for ek, ev in existing.items():
                 if ek not in validated:
@@ -216,7 +273,7 @@ class ConfigManager:
 
 def main():
     parser = argparse.ArgumentParser(description="Initialize or validate TOML configs.")
-    parser.add_argument("-b", "--base", type=Path, default=Path.cwd()/"configs")
+    parser.add_argument("-b", "--base", type=Path, default=Path.cwd() / "configs")
     parser.add_argument("-d", "--defaults", type=Path, default=None)
     parser.add_argument("-m", "--master", type=str, default="config.toml")
     parser.add_argument("--dry-run", action="store_true")
