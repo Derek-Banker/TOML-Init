@@ -147,7 +147,7 @@ ENABLE_LOGS = { defaultValue = true,   type = "bool" }
 
 ## Supported Types
 
-* `int`, `float`, `bool`, `str`
+* `int`, `float`, `bool`, `str`, `list`, `dict`, `datetime`, `date`, `time`
 * Numeric range checks with `min`/`max`
 * Enumerations via `allowedValues`
 * Custom hooks via `validator` (must match a registered `Validator`)

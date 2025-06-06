@@ -1,6 +1,8 @@
 ["DemoApp.General"]
 LOG_LEVEL = { defaultValue = "INFO", type = "str", allowedValues = ["DEBUG","INFO","WARNING","ERROR"] }
 RETRY_COUNT = { defaultValue = 3, type = "int", min = 0 }
+START_DATE = { defaultValue = 2023-01-01, type = "date" }
+REFRESH_TIMES = { defaultValue = [08:00:00, 12:00:00], type = "list" }
 
 ["DemoApp.Features"]
 ENABLE_FEATURE_X = { defaultValue = true, type = "bool" }
