@@ -1,60 +1,168 @@
-# TOML Init
-This is a simple library to handle default config creation and validation on start.
+# TOML-Init
 
-I made this as I install my projects on various machines and enviroments, and I found myself doing this process a lot, especially when using many modules. 
+A lightweight Python library for auto-creating and validating TOML-based configuration files from one or more default templates.
 
-## Info
-`Config Folder Path` = "/configs"
-`Default Config Folder Path` = "/configs/defaults"
-`Default Master Config File Name` = "config.toml"
+For use where you use multiple relatively independent modules that need config values and you want a standardized way to handle, implement, and validate.
 
-## Useage
-If the `Config Folder Path` and `Default Config Folder Path` do not exist, it will create them and then exit.
-It will look for a file in `Config Folder Path` named *.toml it doesn't care about the file name, only the extension.
- - If multiple files with a .toml extension exist, it will error out.
- - If a valid file doesn't exist if will create one named in accordance with `Default Master Config File Name`.
+---
 
-If there are .toml files in `Default Config Folder Path` if will loop over them.
+## Defaults
+
+| Variable                             | Value                                   |
+|--------------------------------------|-----------------------------------------|
+| `DEFAULT_CONFIG_FOLDER_PATH`         | \<Current Working Directory\>/config    |
+| `DEFAULT_CONFIG_DEFAULT_FOLDER_PATH` | \<Current Working Directory\>/defaults  |
+| `DEFAULT_CONFIG_FILE`                | "config.toml"                           |
+
+
+## Features
+* **Automatic directory setup**
+
+  * Ensures your primary `configs/` directory and its `defaults/` subdirectory exist (creates them if missing).
+
+* **Defaults merging**
+
+  * Scans all `*.toml` files under `configs/defaults/`. Each top-level TOML table is treated as a “block” of settings.
+  * Merges multiple default files into a single master `config.toml`, with conflict detection.
+
+* **Schema-driven validation**
+
+  * Each setting may be declared in two ways:
+
+    1. **Simple**: `KEY = <defaultValue>`
+    2. **Full**: `KEY = { defaultValue = <...>, type = "<int|float|bool|str>", min = <...>, max = <...>, allowedValues = [...], validator = "<name>" }`
+  * Supports numeric range checks (`min`/`max`), enumerations (`allowedValues`), and custom validation hooks.
+
+* **Custom validators**
+
+  * Implement by subclassing `Validator` and registering via `register_validator("name", instance)`.
+  * Allows arbitrary user‑defined checks (e.g. path existence, regex match).
+
+* **Preserves user overrides**
+
+  * If users manually edit `config.toml`, extra keys remain intact.
+  * Invalid values are reset to defaults with a logged warning.
+
+* **CLI & programmatic API**
+
+  * Installable console script: `toml-init` for quick command-line setup.
+  * `ConfigManager` class for embedding in Python code.
+
+* **Dry‑run & logging**
+
+  * `--dry-run` to validate without writing changes.
+  * Verbose mode with `--verbose` for debug logging.
+
+---
+
+## Installation
+
+```bash
+pip install toml-init
+```
+
+## Package Structure
+
+```
+toml_init
+├── __init__.py
+├── __main__.py
+├── exceptions.py
+├── validators.py
+└── manager.py
+```
+
+## Quickstart (Python)
+
+```python
+from pathlib import Path
+from toml_init import ConfigManager, register_validator, Validator
+
+# Optional: register a custom validator
+class PathExistsValidator(Validator):
+    def validate(self, value):
+        from pathlib import Path as P
+        if not (isinstance(value, str) and P(value).exists()):
+            raise InvalidConfigValueError(f"Path not found: {value}")
+        return value
+
+register_validator("path_exists", PathExistsValidator())
+
+# Initialize and validate
+cm = ConfigManager(
+    base_path=Path("configs"),
+    defaults_path=Path("configs/defaults"),
+    master_filename="config.toml"
+)
+cm.initialize(dry_run=False)
+
+# Access validated settings
+settings = cm.get_block("QuickBooks.Invoices.Saver")
+print(settings["WINDOW_LOAD_DELAY"])  # e.g. 0.5
+```
+
+## Quickstart (CLI)
+
+```bash
+# Create or validate configs in ./configs (defaults in ./configs/defaults)
+toml-init
+
+# Verbose & dry-run (no file writes)
+toml-init --verbose --dry-run
+
+# Custom paths
+ toml-init --base /etc/myapp/configs \
+           --defaults /etc/myapp/configs/defaults \
+           --master settings.toml
+```
 
 ## Default File Format
-```
-[info]
-block_name = 
 
-[items]
-<item name> = <default value>
-<item name> = {"defaultValue" = <default value>,  "type" = <item type>, "min" = <minimum value>, "max' = <maximum value>}
-```
+Place your default templates in `configs/defaults/`. Each file may define **multiple** blocks (tables):
 
-## Syntax
-With the exception of `<default value>` the other parameters are optional. If you don't intend to use them, you can use the simple declaration `<item name> = <default value>`
+```toml
+# defaults/app_defaults.toml
 
-## Example
-```
-[info]
-block_name = file.saver
+[QuickBooks.Invoices.Saver]
+SHOW_TOASTS = true
+WINDOW_LOAD_DELAY  = { defaultValue = 0.5,  type = "float", min = 0.0 }
+NAVIGATION_DELAY   = { defaultValue = 0.15, type = "float", min = 0.0 }
 
-[items]
-SHOW_TRAY_TIPS      = False
-WINDOW_LOAD_DELAY   = {"defaultValue" = 0.5,  "type" = "float", "min" = 0.0}
-NAVIGATION_DELAY    = {"defaultValue" = 0.15, "type" = "float", "min" = 0.0}
-QUICKBOOKS_NAME     = {"defaultValue" = "Intuit QuickBooks Enterprise Solutions", "type" = "str"}
+[MyApp.Logging]
+LEVEL       = { defaultValue = "INFO", type = "str", allowedValues = ["DEBUG","INFO","WARN","ERROR"] }
+ENABLE_LOGS = { defaultValue = true,   type = "bool" }
 ```
 
+* **Block names** = the table names (e.g. `QuickBooks.Invoices.Saver`).
+* **Settings** under each block may be:
 
-## Current Features
-| Feature             | Description                                                                                        |
-|---------------------|----------------------------------------------------------------------------------------------------|
-| Single config files | Will take individual default config files and validate and combine them into a single config file. |
-| Default value       | The default value for that item, will be used if non existent or invalid                           |
-| Value type          | The expected value type, will trigger a reset if not passed.                                       |
-| Min                 | The minimum accepted value.                                                                        |
-| Max                 | The maximum accepted value.                                                                        |
+  * A primitive default: `KEY = 123` (shorthand for a setting with only `defaultValue`).
+  * A full schema object: specifying `type`, optional `min`/`max`, `allowedValues`, and `validator`.
 
+## Supported Types
+
+* `int`, `float`, `bool`, `str`
+* Numeric range checks with `min`/`max`
+* Enumerations via `allowedValues`
+* Custom hooks via `validator` (must match a registered `Validator`)
+
+---
+
+## Exception Hierarchy
+
+* `TomlInitError` (base)
+
+  * `MultipleConfigFilesError`
+  * `InvalidDefaultSchemaError`
+  * `InvalidConfigValueError`
+  * `BlockConflictError`
+
+Catch these to handle specific error cases gracefully.
+
+---
 
 ## Potential Future Features
-| Feature                     | Description                                                          |
-|-----------------------------|----------------------------------------------------------------------|
-| Multiple config files       | Will support having separate config files for organization purposes? |
-| Comment injection           | Allow comments to be specified in the defaults?                      |
-| Changing directory defaults | Allow the directory defaults to be changed?                          |
+| Feature               | Description                                                          |
+|-----------------------|----------------------------------------------------------------------|
+| Multiple config files | Will support having separate config files for organization purposes? |
+| Comment injection     | Allow comments to be specified in the defaults?                      |

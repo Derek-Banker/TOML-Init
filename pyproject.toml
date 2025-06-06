@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "toml-init"
+version = "0.1.0"
+requires-python = ">=3.7"
+dependencies = ["pytomlpp>=1.0.0"]
+authors = [{name="Derek Banker", email="dbb2002@gmail.com"}]
+description = "A library to auto-create & validate TOML configs from default templates"
+readme = "README.md"
+license = { file = "LICENSE" }
+
+[project.scripts]
+toml-init = "toml_init.manager:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
