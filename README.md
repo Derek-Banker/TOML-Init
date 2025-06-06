@@ -116,6 +116,12 @@ toml-init --verbose --dry-run
            --master settings.toml
 ```
 
+## Example Project
+
+A working sample lives under `example_project/`. Run `python run_demo.py` inside
+that directory to generate `config.toml` using the defaults in
+`configs/defaults/example_defaults.toml`.
+
 ## Default File Format
 
 Place your default templates in `configs/defaults/`. Each file may define **multiple** blocks (tables):
