@@ -1,21 +1,46 @@
-MIT License
-
-Copyright (c) 2025 Derek (Work)
+────────────────────────────────────────────────────────────────────────────────
+MIT License + “No Standalone Sales” Restriction
+────────────────────────────────────────────────────────────────────────────────
+Copyright (c) 2025 Derek Banker
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
+of this software and associated documentation files (the “Software”), to deal
 in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+to use, copy, modify, merge, publish, distribute, and sublicense copies of
+the Software, **subject to the following additional restriction**:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+────────────────────────────────────────────────────────────────────────────────
+“No Standalone Sales” Restriction:
+  The Software MAY NOT be sold, sublicensed, or otherwise distributed **on its
+  own** (in source or compiled/bundled form) for a fee or other consideration.
+  However, you ARE permitted to distribute the Software for free, and you ARE
+  permitted to include or embed the Software as part of a larger work (e.g.,
+  a commercial application, bundled library package, or SaaS) even if that
+  larger work is sold for a fee. In other words:
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+    • Allowed:
+        – Shipping your own app that includes (bundles) this Software as a 
+          library/component, even if you charge money for your app.  
+        – Forking it on GitHub and redistributing it at no charge.  
+        – Internal use by a for-profit company (as long as they don’t charge 
+          for “just my code” by itself).  
+
+    • Not Allowed:
+        – Publishing “ProjectName vX.Y” on a marketplace (npm, PyPI, Patreon, 
+          etc.) as a paid download, without adding any new proprietary code.  
+        – Selling source or binaries of just this Software, standalone, for
+          a price.  
+────────────────────────────────────────────────────────────────────────────────
+
+The above copyright notice and this permission notice (including the “No 
+Standalone Sales” Restriction) shall be included in all copies or substantial 
+portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
+IN THE SOFTWARE.
+────────────────────────────────────────────────────────────────────────────────
