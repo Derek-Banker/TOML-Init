@@ -1,11 +1,22 @@
-# src\toml_init\manager.py
+"""Core configuration management logic."""
+
+from __future__ import annotations
 
 import os
 import argparse
 import logging
 import pytomlpp as toml
 from pathlib import Path
-from typing import Final
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Final,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Set,
+)
 from datetime import date, datetime, time
 
 from toml_init.exceptions import (
@@ -17,38 +28,43 @@ from toml_init.exceptions import (
 from toml_init.validators import CUSTOM_VALIDATORS, Validator, register_validator
 
 
-def _ensure_datetime(value):
+def _ensure_datetime(value: Any) -> datetime:
+    """Validate that ``value`` is a :class:`~datetime.datetime`."""
     if isinstance(value, datetime):
         return value
     raise TypeError("value is not a datetime")
 
 
-def _ensure_date(value):
+def _ensure_date(value: Any) -> date:
+    """Validate that ``value`` is a :class:`~datetime.date` (not datetime)."""
     if isinstance(value, date) and not isinstance(value, datetime):
         return value
     raise TypeError("value is not a date")
 
 
-def _ensure_time(value):
+def _ensure_time(value: Any) -> time:
+    """Validate that ``value`` is a :class:`~datetime.time`."""
     if isinstance(value, time):
         return value
     raise TypeError("value is not a time")
 
 
-def _ensure_list(value):
+def _ensure_list(value: Any) -> list[Any]:
+    """Validate that ``value`` is a list."""
     if isinstance(value, list):
         return value
     raise TypeError("value is not a list")
 
 
-def _ensure_dict(value):
+def _ensure_dict(value: Any) -> dict[str, Any]:
+    """Validate that ``value`` is a dictionary."""
     if isinstance(value, dict):
         return value
     raise TypeError("value is not a dict")
 
 
 # Type coercion registry
-TYPE_REGISTRY = {
+TYPE_REGISTRY: Dict[str, Callable[[Any], Any]] = {
     "int": int,
     "float": float,
     "bool": bool,
@@ -63,11 +79,11 @@ TYPE_REGISTRY = {
 }
 
 # Keys that indicate a value is a schema object rather than a primitive default
-SCHEMA_KEYS = {"defaultValue", "type", "min", "max", "allowedValues", "validator"}
+SCHEMA_KEYS: Set[str] = {"defaultValue", "type", "min", "max", "allowedValues", "validator"}
 
 
-def _infer_type(value) -> str:
-    """Return the schema type string for a python value."""
+def _infer_type(value: Any) -> str:
+    """Return the schema type string for a Python value."""
     if isinstance(value, bool):
         return "bool"
     if isinstance(value, int) and not isinstance(value, bool):
@@ -91,8 +107,8 @@ def _infer_type(value) -> str:
     )
 
 
-def _normalize_table(tbl: dict) -> dict:
-    """Convert shorthand defaults to full schema dictionaries."""
+def _normalize_table(tbl: Mapping[str, Any]) -> Dict[str, Dict[str, Any]]:
+    """Expand shorthand default values into explicit schema dictionaries."""
     normalized = {}
     for key, val in tbl.items():
         if isinstance(val, dict) and SCHEMA_KEYS.intersection(val.keys()):
@@ -114,7 +130,19 @@ DEFAULT_CONFIG_DEFAULT_FOLDER_PATH: Final[Path] = DEFAULT_CONFIG_FOLDER_PATH.joi
 DEFAULT_CONFIG_FILE_NAME: Final[str] = "config.toml"
 
 
-def validate_setting(key_name: str, raw_value, schema: dict):
+def validate_setting(
+    key_name: str, raw_value: Any, schema: Mapping[str, Any]
+) -> Any:
+    """Validate a configuration value against the provided schema.
+
+    :param key_name: Name of the setting being validated
+    :param raw_value: The value loaded from the master config
+    :param schema: Parsed schema dictionary from the defaults
+    :returns: The validated and coerced value
+    :raises InvalidDefaultSchemaError: If the schema is malformed
+    :raises InvalidConfigValueError: If ``raw_value`` fails validation
+    """
+
     default_val = schema.get("defaultValue")
     expected_str = schema.get("type")
     min_allowed = schema.get("min")
@@ -168,19 +196,28 @@ def validate_setting(key_name: str, raw_value, schema: dict):
 
 
 class ConfigManager:
+    """Manage merging and validation of configuration files."""
     def __init__(
         self,
         base_path: Path = DEFAULT_CONFIG_FOLDER_PATH,
         defaults_path: Path = DEFAULT_CONFIG_DEFAULT_FOLDER_PATH,
         master_filename: str = DEFAULT_CONFIG_FILE_NAME,
-        logger: logging.Logger = None,
-    ):
+        logger: Optional[logging.Logger] = None,
+    ) -> None:
+        """Create a new :class:`ConfigManager` instance.
+
+        :param base_path: Directory containing the master config file
+        :param defaults_path: Directory containing default templates
+        :param master_filename: Name of the master config file
+        :param logger: Optional :class:`logging.Logger` for diagnostics
+        """
         self.base_path = base_path
         self.defaults_path = defaults_path or (base_path / "defaults")
         self.master_filename = master_filename
         self.logger = logger or logging.getLogger(__name__)
 
-    def initialize(self, dry_run: bool = False):
+    def initialize(self, dry_run: bool = False) -> None:
+        """Initialize the configuration directory structure and merge defaults."""
         # Create directories
         if not self.base_path.exists():
             self.logger.debug(f"Creating base dir {self.base_path}")
@@ -211,7 +248,10 @@ class ConfigManager:
         elif dry_run:
             self.logger.info(f"[Dry run] Would write config to {master_path}")
 
-    def _merge_and_validate(self, master_path: Path, dry_run: bool) -> dict:
+    def _merge_and_validate(
+        self, master_path: Path, dry_run: bool
+    ) -> Dict[str, Dict[str, Any]]:
+        """Merge defaults with the master config and validate values."""
         try:
             base_doc = toml.load(str(master_path))
         except Exception:
@@ -260,18 +300,24 @@ class ConfigManager:
 
         return final
 
-    def _schemas_compatible(self, s1: dict, s2: dict) -> bool:
+    def _schemas_compatible(
+        self, s1: Mapping[str, Any], s2: Mapping[str, Any]
+    ) -> bool:
+        """Return ``True`` if two schema dictionaries are equivalent."""
         keys1 = set(s1.keys())
         keys2 = set(s2.keys())
         return keys1 == keys2 and all(s1[k] == s2[k] for k in keys1)
 
-    def get_block(self, block_name: str) -> dict:
+    def get_block(self, block_name: str) -> Dict[str, Any]:
+        """Load a specific block from the merged configuration."""
         path = self.base_path / self.master_filename
         doc = toml.load(str(path))
         return doc.get(block_name, {})
 
 
-def main():
+def main() -> int:
+    """Command-line entry point for ``toml-init``."""
+
     parser = argparse.ArgumentParser(description="Initialize or validate TOML configs.")
     parser.add_argument("-b", "--base", type=Path, default=Path.cwd() / "configs")
     parser.add_argument("-d", "--defaults", type=Path, default=None)

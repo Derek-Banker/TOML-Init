@@ -1,5 +1,9 @@
-# src\toml_init\validators.py
+"""Utilities for registering and running custom validators."""
+
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
+from typing import Any, Dict
 from toml_init.exceptions import InvalidConfigValueError, InvalidDefaultSchemaError
 
 class Validator(ABC):
@@ -11,18 +15,18 @@ class Validator(ABC):
     """
 
     @abstractmethod
-    def validate(self, value):
+    def validate(self, value: Any) -> Any:
         """Validate (and optionally coerce) `value`."""
         ...
 
-    def __call__(self, value):
+    def __call__(self, value: Any) -> Any:
         return self.validate(value)
 
 # Registry for custom validators
-CUSTOM_VALIDATORS: dict[str, Validator] = {}
+CUSTOM_VALIDATORS: Dict[str, Validator] = {}
 
 
-def register_validator(name: str, validator: Validator):
+def register_validator(name: str, validator: Validator) -> None:
     """
     Register a Validator instance under the given name.
     """
