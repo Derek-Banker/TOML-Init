@@ -1,12 +1,8 @@
 name: Publish to PyPI
 
 on:
-  push:
-    # adjust this if you prefer tagging or releases instead
-    branches:
-      - main
-    # or: tags:
-    #   - 'v*.*.*'
+  release:
+    types: [published]
 
 jobs:
   build-and-publish:
