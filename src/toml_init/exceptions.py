@@ -1,4 +1,5 @@
-# src\toml_init\exceptions.py
+"""Exception hierarchy for :mod:`toml_init`."""
+
 
 class TomlInitError(Exception):
     """Base class for all toml-init exceptions."""

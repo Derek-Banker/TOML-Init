@@ -1,19 +1,28 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires    = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "toml-init"
-version = "0.1.0"
+name            = "toml-init"
+version         = "0.1.2"
+description     = "A library to auto-create and validate TOML configuration files from templates"
+readme          = "README.md"
+authors         = [{ name = "Derek Banker", email = "dbb2002@gmail.com" }]
 requires-python = ">=3.7"
-dependencies = ["pytomlpp>=1.0.0"]
-authors = [{name="Derek Banker", email="dbb2002@gmail.com"}]
-description = "A library to auto-create & validate TOML configs from default templates"
-readme = "README.md"
-license = { file = "LICENSE" }
+dependencies    = ["pytomlpp>=1.0.0"]
+license        = "Apache-2.0"            # SPDX string
+license-files  = ["LICENSE.txt"]          
+
+keywords    = ["toml", "configuration", "validation"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+urls = {"Homepage"    = "https://github.com/DerekB-CO2Monitoring/TOML-Init","Bug Tracker" = "https://github.com/DerekB-CO2Monitoring/TOML-Init/issues"}
 
 [project.scripts]
 toml-init = "toml_init.manager:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
