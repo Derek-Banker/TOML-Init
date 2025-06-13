@@ -1,14 +1,15 @@
+import base64
 import logging
 import os
-import base64
+
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 class EncryptionManager:
-    DEFAULT_SALT_SIZE = 16
-    DEFAULT_ITERATIONS = 100_000
+    DEFAULT_SALT_SIZE: int  = 16
+    DEFAULT_ITERATIONS: int = 100_000
 
     def __init__(self,
                  logger: logging.Logger | None = None
@@ -23,16 +24,14 @@ class EncryptionManager:
                 raise TypeError("Provided parameter `logger` is not a valid instance of `logging.Logger`.")
 
     @staticmethod
-    def generate_salt(length: int = DEFAULT_SALT_SIZE) -> bytes:
-        return os.urandom(length)
+    def generate_salt(length: int = DEFAULT_SALT_SIZE) -> str:
+        """Generate a new random salt and return as base64 string."""
+        return base64.b64encode(os.urandom(length)).decode("ascii")
 
     @staticmethod
-    def derive_key(password: str, 
-                   salt: bytes, 
-                   iterations: int = DEFAULT_ITERATIONS
-                  ) -> bytes:
-        """Derives a Fernet-compatible key from a password and salt."""
-
+    def derive_key(password: str, salt_b64: str, iterations: int = DEFAULT_ITERATIONS) -> str:
+        """Derive a base64-encoded Fernet key from a password and base64 salt."""
+        salt = base64.b64decode(salt_b64)
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
@@ -40,44 +39,35 @@ class EncryptionManager:
             iterations=iterations,
             backend=default_backend()
         )
-        return base64.urlsafe_b64encode(kdf.derive(password.encode()))
+        key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
+        return key.decode("ascii")  # Fernet expects key as base64 string
 
-    def encrypt(self, 
-                data: str, 
-                key: bytes
-               ) -> bytes:
-        """Encrypt a string using the supplied key."""
-
-        if not isinstance(data, str) or not isinstance(key, bytes):
-            raise TypeError("data must be str and key must be bytes")
+    def encrypt(self, data: str, key_b64: str) -> str:
+        """Encrypt data, returning a base64 string."""
+        if not isinstance(data, str):
+            raise TypeError("data must be str")
         try:
-            fernet = Fernet(key)
-            return fernet.encrypt(data.encode())
+            fernet = Fernet(key_b64.encode("ascii"))
+            encrypted_bytes = fernet.encrypt(data.encode())
+            return base64.b64encode(encrypted_bytes).decode("ascii")
         except Exception as e:
             self.logger.error(f"Encryption failed: {e}")
             raise
 
-    def decrypt(self, 
-                token: bytes, 
-                key: bytes
-               ) -> str:
-        """Decrypt a token using the supplied key."""
-
-        if not isinstance(token, bytes) or not isinstance(key, bytes):
-            raise TypeError("token and key must be bytes")
+    def decrypt(self, encrypted_b64: str, key_b64: str) -> str:
+        """Decrypt base64-encoded data, returning plaintext string."""
         try:
-            fernet = Fernet(key)
-            return fernet.decrypt(token).decode()
+            fernet = Fernet(key_b64.encode("ascii"))
+            encrypted_bytes = base64.b64decode(encrypted_b64)
+            return fernet.decrypt(encrypted_bytes).decode()
         except Exception as e:
             self.logger.error(f"Decryption failed: {e}")
             raise
 
     @staticmethod
-    def hash(data: str, 
-             salt: bytes
-            ) -> bytes:
-        """Hash data with SHA256 and a salt."""
-        
+    def hash(data: str, salt_b64: str) -> str:
+        """Hash data with SHA256 and base64-encoded salt, returning base64 digest."""
+        salt = base64.b64decode(salt_b64)
         digest = hashes.Hash(hashes.SHA256(), backend=default_backend())
         digest.update(salt + data.encode())
-        return digest.finalize()
+        return base64.b64encode(digest.finalize()).decode("ascii")
