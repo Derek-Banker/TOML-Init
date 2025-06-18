@@ -1,4 +1,4 @@
-[build-system]
+e[build-system]
 requires    = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
@@ -18,7 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
-urls = {"Homepage"    = "https://github.com/DerekB-CO2Monitoring/TOML-Init","Bug Tracker" = "https://github.com/DerekB-CO2Monitoring/TOML-Init/issues"}
+urls = {"Homepage"    = "https://github.com/Derek-Banker/TOML-Init","Bug Tracker" = "https://github.com/Derek-Banker/TOML-Init/issues"}
 
 [project.scripts]
 toml-init = "toml_init.manager:main"
