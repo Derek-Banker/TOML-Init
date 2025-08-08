@@ -1,4 +1,4 @@
-name: Publish to PyPI
+name: Build & Publish to PyPI
 
 on:
   release:
@@ -7,6 +7,8 @@ on:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -22,20 +24,17 @@ jobs:
       - name: Build distributions
         run: python -m build --sdist --wheel
 
+      - name: Attach distributions to GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" dist/*
+
       - name: Publish to PyPI
-        # Option A: using twine directly
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
           twine upload dist/* \
             --username "__token__" \
             --password "${{ secrets.PYPI_API_TOKEN }}"
-        env:
-          # redundant with the args above, but ensures non-interactive mode
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-
-      # --- OR, Option B: use the official pypa action ---
-      #- name: Publish via pypa/gh-action-pypi-publish
-      #  uses: pypa/gh-action-pypi-publish@release-v1
-      #  with:
-      #    user: "__token__"
-      #    password: "${{ secrets.PYPI_API_TOKEN }}"
