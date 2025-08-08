@@ -202,7 +202,7 @@ class ConfigManager:
         base_path: Path = DEFAULT_CONFIG_FOLDER_PATH,
         defaults_path: Path = DEFAULT_CONFIG_DEFAULT_FOLDER_PATH,
         master_filename: str = DEFAULT_CONFIG_FILE_NAME,
-        logger: Optional[logging.Logger] = None,
+        logger = logging.getLogger(__name__),
     ) -> None:
         """Create a new :class:`ConfigManager` instance.
 
@@ -214,7 +214,7 @@ class ConfigManager:
         self.base_path = base_path
         self.defaults_path = defaults_path or (base_path / "defaults")
         self.master_filename = master_filename
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger
 
     def initialize(self, dry_run: bool = False) -> None:
         """Initialize the configuration directory structure and merge defaults."""
